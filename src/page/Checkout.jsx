@@ -1,0 +1,370 @@
+
+import React, { useState, useRef } from 'react'
+import { useNavigate, useParams, Link } from 'react-router-dom'
+import Courses from '../data/Courses'
+import qrCode from '../assets/qr_code.png'
+
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg']
+const MAX_SIZE = 5 * 1024 * 1024 // 5MB
+
+function Checkout() {
+  const { id } = useParams()
+  const course = Courses.find((c) => c.id === Number(id))
+  const navigate = useNavigate()
+  const fileRef = useRef(null)
+
+  const [form, setForm] = useState({
+    customer_name: '',
+    phone: '',
+    email: '',
+    note: '',
+  })
+  const [delivery, setDelivery] = useState({
+    address: '',
+    city: '',
+    district: '',
+    ward: '',
+  })
+  const [deliveryMethod, setDeliveryMethod] = useState('standard')
+  const [screenshot, setScreenshot] = useState(null)
+  const [preview, setPreview] = useState('')
+  const [errors, setErrors] = useState({})
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  if (!course) {
+    return (
+      <div className="auth-page">
+        <div className="auth-card">
+          <h1>Course Not Found</h1>
+          <Link to="/course" className="btn btn-dark btn-block">
+            Back to Shop
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value })
+    setErrors({ ...errors, [e.target.name]: '' })
+  }
+
+  const handleFile = (e) => {
+    const file = e.target.files[0]
+    setErrors((prev) => ({ ...prev, screenshot: '' }))
+
+    if (!file) {
+      setScreenshot(null)
+      setPreview('')
+      return
+    }
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setScreenshot(null)
+      setPreview('')
+      setErrors((prev) => ({
+        ...prev,
+        screenshot: 'Only JPG, JPEG, PNG or WEBP images are allowed',
+      }))
+      return
+    }
+
+    if (file.size > MAX_SIZE) {
+      setScreenshot(null)
+      setPreview('')
+      setErrors((prev) => ({
+        ...prev,
+        screenshot: 'File is too large. Maximum size is 5MB',
+      }))
+      return
+    }
+
+    setScreenshot(file)
+    setPreview(URL.createObjectURL(file))
+  }
+
+  const handleDeliveryChange = (e) => {
+    setDelivery({ ...delivery, [e.target.name]: e.target.value })
+    setErrors({ ...errors, [e.target.name]: '' })
+  }
+
+  const validate = () => {
+    const nE = {}
+
+    if (!form.customer_name.trim()) nE.customer_name = 'Name is required'
+
+    if (!form.phone.trim()) {
+      nE.phone = 'Phone is required'
+    } else if (!/^[0-9+ ]+$/.test(form.phone)) {
+      nE.phone = 'Phone contains invalid characters'
+    }
+
+    if (!form.email.trim()) {
+      nE.email = 'Email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      nE.email = 'Enter a valid email address'
+    }
+
+    if (!delivery.address.trim()) nE.address = 'Address is required'
+    if (!delivery.city.trim()) nE.city = 'City is required'
+    if (!delivery.district.trim()) nE.district = 'District is required'
+    if (!delivery.ward.trim()) nE.ward = 'Ward is required'
+
+    if (!screenshot) {
+      nE.screenshot = 'Please upload your payment screenshot'
+    }
+
+    return nE
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    const nE = validate()
+    if (Object.keys(nE).length > 0) {
+      setErrors(nE)
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      navigate('/success')
+    } catch (err) {
+      setError(err.message || 'Unable to submit order. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="checkout-page" data-aos="fade-up">
+      <div className="checkout-wrap">
+        <nav className="crumbs">
+          <Link to="/">Home</Link> <span>/</span>
+          <Link to="/course">Shop</Link> <span>/</span>
+          <span>Checkout</span>
+        </nav>
+
+        {error && (
+          <div className="alert alert-danger">
+            <strong>Order Failed</strong>
+            <p>{error}</p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="checkout-grid">
+          {/* LEFT: Course + Customer info */}
+          <div className="checkout-left">
+            <div className="panel">
+              <h2>Your Course</h2>
+              <div className="course-summary">
+                <img src={course.img} alt={course.title} />
+                <div>
+                  <span className="product-cat">{course.category}</span>
+                  <h3>{course.title}</h3>
+                  <div className="price">
+                    <span className="price-now">${course.price}</span>
+                    {course.oldPrice && (
+                      <span className="price-old">${course.oldPrice}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="panel">
+              <h2>Customer Information</h2>
+
+              <div className="form-group">
+                <label>Full Name</label>
+                <input
+                  name="customer_name"
+                  placeholder="Enter your full name"
+                  value={form.customer_name}
+                  onChange={handleChange}
+                  className={errors.customer_name ? 'input-error' : ''}
+                />
+                {errors.customer_name && (
+                  <p className="error">{errors.customer_name}</p>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label>Phone Number</label>
+                <input
+                  name="phone"
+                  placeholder="097 000 0000"
+                  value={form.phone}
+                  onChange={handleChange}
+                  className={errors.phone ? 'input-error' : ''}
+                />
+                {errors.phone && <p className="error">{errors.phone}</p>}
+              </div>
+
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={form.email}
+                  onChange={handleChange}
+                  className={errors.email ? 'input-error' : ''}
+                />
+                {errors.email && <p className="error">{errors.email}</p>}
+              </div>
+
+              <div className="form-group">
+                <label>Note (optional)</label>
+                <textarea
+                  name="note"
+                  rows="3"
+                  placeholder="Anything we should know?"
+                  value={form.note}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div className="panel">
+              <h2>Delivery Address</h2>
+
+              <div className="delivery-method-toggle">
+                <button
+                  type="button"
+                  className={`delivery-method-btn ${deliveryMethod === 'standard' ? 'active' : ''}`}
+                  onClick={() => setDeliveryMethod('standard')}
+                >
+                  <span className="delivery-icon">📦</span>
+                  <div>
+                    <strong>Standard Delivery</strong>
+                    <small>3-5 business days · Free</small>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  className={`delivery-method-btn ${deliveryMethod === 'express' ? 'active' : ''}`}
+                  onClick={() => setDeliveryMethod('express')}
+                >
+                  <span className="delivery-icon">🚀</span>
+                  <div>
+                    <strong>Express Delivery</strong>
+                    <small>1-2 business days · $5</small>
+                  </div>
+                </button>
+              </div>
+
+              <div className="form-group">
+                <label>Street Address</label>
+                <input
+                  name="address"
+                  placeholder="123 Main Street, Building A"
+                  value={delivery.address}
+                  onChange={handleDeliveryChange}
+                  className={errors.address ? 'input-error' : ''}
+                />
+                {errors.address && <p className="error">{errors.address}</p>}
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>City / Province</label>
+                  <input
+                    name="city"
+                    placeholder="Ho Chi Minh City"
+                    value={delivery.city}
+                    onChange={handleDeliveryChange}
+                    className={errors.city ? 'input-error' : ''}
+                  />
+                  {errors.city && <p className="error">{errors.city}</p>}
+                </div>
+
+                <div className="form-group">
+                  <label>District</label>
+                  <input
+                    name="district"
+                    placeholder="District 1"
+                    value={delivery.district}
+                    onChange={handleDeliveryChange}
+                    className={errors.district ? 'input-error' : ''}
+                  />
+                  {errors.district && <p className="error">{errors.district}</p>}
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Ward / Commune</label>
+                <input
+                  name="ward"
+                  placeholder="Ward 5"
+                  value={delivery.ward}
+                  onChange={handleDeliveryChange}
+                  className={errors.ward ? 'input-error' : ''}
+                />
+                {errors.ward && <p className="error">{errors.ward}</p>}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: Payment + screenshot */}
+          <div className="checkout-right">
+            <div className="panel payment-panel">
+              <h2>Payment Method</h2>
+              <p className="payment-sub">Scan the QR code to pay the amount below.</p>
+
+              <div className="qr-box">
+                <img src={qrCode} alt="Payment QR Code" className="payment-qr" />
+              </div>
+
+              <div className="amount-box">
+                <span>Amount</span>
+                <strong>${course.price}</strong>
+              </div>
+
+              <div className="form-group">
+                <label>Upload Payment Screenshot</label>
+                <div
+                  className={`upload-box ${errors.screenshot ? 'upload-error' : ''}`}
+                  onClick={() => fileRef.current?.click()}
+                >
+                  {preview ? (
+                    <img src={preview} alt="Payment preview" className="upload-preview" />
+                  ) : (
+                    <>
+                      <span className="upload-icon">+</span>
+                      <p>Click to upload your screenshot</p>
+                      <small>JPG, JPEG, PNG or WEBP · max 5MB</small>
+                    </>
+                  )}
+                </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                  onChange={handleFile}
+                  style={{ display: 'none' }}
+                />
+                {errors.screenshot && <p className="error">{errors.screenshot}</p>}
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-block submit-order"
+              disabled={loading}
+            >
+              {loading ? 'Submitting Order...' : 'Submit Order'}
+            </button>
+
+            {loading && <p className="submit-note">Please wait, do not close this page.</p>}
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+export default Checkout
