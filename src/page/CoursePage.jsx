@@ -1,16 +1,20 @@
 
-import React, { useState } from "react";
+import { useState } from "react";
 import ProductCard from "../components/CourseCard";
+import ProductModal from "../components/ProductModal";
 import courses from "../data/Courses";
 
 function CoursePage() {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [selectedId, setSelectedId] = useState(null);
 
   const categories = ["All", "Tees", "Shirts", "Jeans", "Bottoms", "Outerwear", "Sweaters", "Footwear"];
 
   const filteredCourses = activeCategory === "All"
     ? courses
     : courses.filter((c) => c.category === activeCategory);
+
+  const selectedCourse = courses.find((c) => c.id === selectedId);
 
   return (
     <section className="shop-page">
@@ -49,6 +53,8 @@ function CoursePage() {
               badge={course.badge}
               sizes={course.sizes}
               colors={course.colors}
+              onSelect={setSelectedId}
+              featured={course.id === 11}
             />
           ))}
         </div>
@@ -60,6 +66,10 @@ function CoursePage() {
         )}
 
       </div>
+
+      {selectedCourse && (
+        <ProductModal key={selectedCourse.id} product={selectedCourse} onClose={() => setSelectedId(null)} />
+      )}
     </section>
   );
 }

@@ -1,10 +1,12 @@
 
 
-import React from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useLocation } from 'react-router-dom'
 
 function Success() {
   const { orderId } = useParams()
+  const location = useLocation()
+  const stateOrderId = location.state?.orderId
+  const orderIdShown = orderId || stateOrderId || 'ORD-XXXX'
   const telegramUsername = 'my_shop_order_genz_wear_bot'
   const telegramUrl = `https://t.me/${telegramUsername}`
 
@@ -19,7 +21,7 @@ function Success() {
         <h1>Order Submitted Successfully!</h1>
 
         <p className="success-id">
-          Order ID: <strong>{orderId || 'ORD-XXXX'}</strong>
+          Order ID: <strong>{orderIdShown}</strong>
         </p>
 
         <p className="success-message">
@@ -39,7 +41,7 @@ function Success() {
 
           <div>
             <span>Order</span>
-            <strong>{orderId || 'Submitted'}</strong>
+            <strong>{orderIdShown}</strong>
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', message: '' })
