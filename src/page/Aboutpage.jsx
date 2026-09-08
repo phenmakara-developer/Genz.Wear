@@ -1,7 +1,4 @@
 
-import React from 'react'
-
-
 function Aboutpage() {
   return (
     <section className="about-page">

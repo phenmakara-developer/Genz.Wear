@@ -1,16 +1,20 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import ProductCard from '../components/CourseCard'
+import ProductModal from '../components/ProductModal'
 import Courses from '../data/Courses'
 import heroImg from '../assets/hero-new.png'
 
 function HomePage() {
   const [activeCategory, setActiveCategory] = useState("All")
+  const [selectedId, setSelectedId] = useState(null)
 
   const categories = ["All", "Tees", "Shirts", "Jeans", "Bottoms", "Outerwear", "Sweaters", "Footwear"]
 
   const filteredCourses = activeCategory === "All"
     ? Courses
     : Courses.filter((c) => c.category === activeCategory)
+
+  const selectedCourse = Courses.find((c) => c.id === selectedId)
 
   return (
     <div>
@@ -69,6 +73,8 @@ function HomePage() {
               badge={course.badge}
               sizes={course.sizes}
               colors={course.colors}
+              onSelect={setSelectedId}
+              featured={course.id === 11}
             />
           ))}
         </div>
@@ -79,6 +85,10 @@ function HomePage() {
           </div>
         )}
       </section>
+
+      {selectedCourse && (
+        <ProductModal key={selectedCourse.id} product={selectedCourse} onClose={() => setSelectedId(null)} />
+      )}
     </div>
   )
 }

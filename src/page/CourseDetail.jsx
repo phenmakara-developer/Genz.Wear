@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Courses from '../data/Courses'
 import ProductCard from '../components/CourseCard'
+import { useCart } from '../context/CartContext'
 
 function ProductDetail() {
   const { id } = useParams()
+  const { addItem } = useCart()
   const product = Courses.find((item) => item.id === Number(id))
 
   const [selectedSize, setSelectedSize] = useState(
@@ -15,6 +17,14 @@ function ProductDetail() {
     product && product.colors ? product.colors[0] : null
   )
   const [activeImg, setActiveImg] = useState(0)
+
+  const [addedToCart, setAddedToCart] = useState(false)
+
+  const handleAddToCart = () => {
+    addItem(product, { size: selectedSize, color: selectedColor, quantity: 1 })
+    setAddedToCart(true)
+    setTimeout(() => setAddedToCart(false), 2000)
+  }
 
   if (!product) {
     return <h1>Product Not Found</h1>
@@ -125,6 +135,13 @@ function ProductDetail() {
             )}
 
             <div className="detail-actions">
+              <button
+                type="button"
+                className={`btn btn-dark buy-lg ${addedToCart ? 'btn-added' : ''}`}
+                onClick={handleAddToCart}
+              >
+                {addedToCart ? '✓ Added to Cart' : 'Add to Cart'}
+              </button>
               <Link to={`/checkout/${product.id}`} className="btn buy-lg">
                 Buy Now
               </Link>

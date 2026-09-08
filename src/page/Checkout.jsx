@@ -1,17 +1,33 @@
-
-import React, { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import Courses from '../data/Courses'
+import { useCart } from '../context/CartContext'
+import { useOrders } from '../context/OrderContext'
 import qrCode from '../assets/qr_code.png'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg']
-const MAX_SIZE = 5 * 1024 * 1024 // 5MB
+const MAX_SIZE = 5 * 1024 * 1024
 
 function Checkout() {
   const { id } = useParams()
-  const course = Courses.find((c) => c.id === Number(id))
+  const { items: cartItems, subtotal: cartTotal, clearCart } = useCart()
+  const { placeOrder } = useOrders()
   const navigate = useNavigate()
   const fileRef = useRef(null)
+
+  const product = id ? Courses.find((c) => c.id === Number(id)) : null
+
+  const checkoutItems = useMemo(() => {
+    if (product) {
+      return [{ title: product.title, quantity: 1, price: product.price, image: product.img }]
+    }
+    return cartItems.map((i) => ({ title: i.title, quantity: i.quantity, price: i.price, image: i.image }))
+  }, [product, cartItems])
+
+  const totalAmount = useMemo(() => {
+    if (product) return product.price
+    return cartTotal
+  }, [product, cartTotal])
 
   const [form, setForm] = useState({
     customer_name: '',
@@ -19,12 +35,7 @@ function Checkout() {
     email: '',
     note: '',
   })
-  const [delivery, setDelivery] = useState({
-    address: '',
-    city: '',
-    district: '',
-    ward: '',
-  })
+  const [delivery, setDelivery] = useState({ address: '', city: '', district: '', ward: '' })
   const [deliveryMethod, setDeliveryMethod] = useState('standard')
   const [screenshot, setScreenshot] = useState(null)
   const [preview, setPreview] = useState('')
@@ -32,14 +43,13 @@ function Checkout() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  if (!course) {
+  if (!product && cartItems.length === 0) {
     return (
       <div className="auth-page">
         <div className="auth-card">
-          <h1>Course Not Found</h1>
-          <Link to="/course" className="btn btn-dark btn-block">
-            Back to Shop
-          </Link>
+          <h1>Nothing to Checkout</h1>
+          <p style={{ color: 'var(--text-muted)', marginBottom: 20 }}>Your cart is empty.</p>
+          <Link to="/course" className="btn btn-dark btn-block">Browse Shop</Link>
         </div>
       </div>
     )
@@ -53,33 +63,17 @@ function Checkout() {
   const handleFile = (e) => {
     const file = e.target.files[0]
     setErrors((prev) => ({ ...prev, screenshot: '' }))
-
-    if (!file) {
-      setScreenshot(null)
-      setPreview('')
-      return
-    }
-
+    if (!file) { setScreenshot(null); setPreview(''); return }
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setScreenshot(null)
-      setPreview('')
-      setErrors((prev) => ({
-        ...prev,
-        screenshot: 'Only JPG, JPEG, PNG or WEBP images are allowed',
-      }))
+      setScreenshot(null); setPreview('')
+      setErrors((prev) => ({ ...prev, screenshot: 'Only JPG, JPEG, PNG or WEBP images are allowed' }))
       return
     }
-
     if (file.size > MAX_SIZE) {
-      setScreenshot(null)
-      setPreview('')
-      setErrors((prev) => ({
-        ...prev,
-        screenshot: 'File is too large. Maximum size is 5MB',
-      }))
+      setScreenshot(null); setPreview('')
+      setErrors((prev) => ({ ...prev, screenshot: 'File is too large. Maximum size is 5MB' }))
       return
     }
-
     setScreenshot(file)
     setPreview(URL.createObjectURL(file))
   }
@@ -91,47 +85,49 @@ function Checkout() {
 
   const validate = () => {
     const nE = {}
-
     if (!form.customer_name.trim()) nE.customer_name = 'Name is required'
-
-    if (!form.phone.trim()) {
-      nE.phone = 'Phone is required'
-    } else if (!/^[0-9+ ]+$/.test(form.phone)) {
-      nE.phone = 'Phone contains invalid characters'
-    }
-
-    if (!form.email.trim()) {
-      nE.email = 'Email is required'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      nE.email = 'Enter a valid email address'
-    }
-
+    if (!form.phone.trim()) nE.phone = 'Phone is required'
+    else if (!/^[0-9+ ]+$/.test(form.phone)) nE.phone = 'Phone contains invalid characters'
+    if (!form.email.trim()) nE.email = 'Email is required'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) nE.email = 'Enter a valid email'
     if (!delivery.address.trim()) nE.address = 'Address is required'
     if (!delivery.city.trim()) nE.city = 'City is required'
     if (!delivery.district.trim()) nE.district = 'District is required'
     if (!delivery.ward.trim()) nE.ward = 'Ward is required'
-
-    if (!screenshot) {
-      nE.screenshot = 'Please upload your payment screenshot'
-    }
-
+    if (!screenshot) nE.screenshot = 'Please upload your payment screenshot'
     return nE
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
-
     const nE = validate()
-    if (Object.keys(nE).length > 0) {
-      setErrors(nE)
-      return
-    }
-
+    if (Object.keys(nE).length > 0) { setErrors(nE); return }
     setLoading(true)
     setError('')
-
     try {
-      navigate('/success')
+      const items = checkoutItems.map((i) => ({
+        title: i.title,
+        qty: i.quantity,
+        price: i.price,
+      }))
+      const shipping = deliveryMethod === 'express' ? 5 : 0
+      const grandTotal = totalAmount + shipping
+      const order = {
+        customer: form.customer_name,
+        email: form.email,
+        phone: form.phone,
+        address: `${delivery.address}, ${delivery.ward}, ${delivery.district}, ${delivery.city}`,
+        note: form.note,
+        items,
+        total: grandTotal,
+        subtotal: totalAmount,
+        shipping,
+        paymentMethod: deliveryMethod === 'express' ? 'QR Code (Express)' : 'QR Code',
+        deliveryMethod,
+      }
+      placeOrder(order)
+      if (!product) clearCart()
+      navigate('/success', { state: { orderId: order.id }, replace: true })
     } catch (err) {
       setError(err.message || 'Unable to submit order. Please try again.')
     } finally {
@@ -156,99 +152,61 @@ function Checkout() {
         )}
 
         <form onSubmit={handleSubmit} className="checkout-grid">
-          {/* LEFT: Course + Customer info */}
           <div className="checkout-left">
             <div className="panel">
-              <h2>Your Course</h2>
-              <div className="course-summary">
-                <img src={course.img} alt={course.title} />
-                <div>
-                  <span className="product-cat">{course.category}</span>
-                  <h3>{course.title}</h3>
-                  <div className="price">
-                    <span className="price-now">${course.price}</span>
-                    {course.oldPrice && (
-                      <span className="price-old">${course.oldPrice}</span>
-                    )}
+              <h2>{product ? 'Your Product' : `Your Cart (${checkoutItems.length} items)`}</h2>
+              <div className="checkout-items-list">
+                {checkoutItems.map((item, idx) => (
+                  <div key={idx} className="course-summary">
+                    <img src={item.image} alt={item.title} />
+                    <div>
+                      <h3>{item.title}</h3>
+                      <div className="price">
+                        <span className="price-now">${item.price}</span>
+                        {item.quantity > 1 && (
+                          <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>x{item.quantity}</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
 
             <div className="panel">
               <h2>Customer Information</h2>
-
               <div className="form-group">
                 <label>Full Name</label>
-                <input
-                  name="customer_name"
-                  placeholder="Enter your full name"
-                  value={form.customer_name}
-                  onChange={handleChange}
-                  className={errors.customer_name ? 'input-error' : ''}
-                />
-                {errors.customer_name && (
-                  <p className="error">{errors.customer_name}</p>
-                )}
+                <input name="customer_name" placeholder="Enter your full name" value={form.customer_name} onChange={handleChange} className={errors.customer_name ? 'input-error' : ''} />
+                {errors.customer_name && <p className="error">{errors.customer_name}</p>}
               </div>
-
               <div className="form-group">
                 <label>Phone Number</label>
-                <input
-                  name="phone"
-                  placeholder="097 000 0000"
-                  value={form.phone}
-                  onChange={handleChange}
-                  className={errors.phone ? 'input-error' : ''}
-                />
+                <input name="phone" placeholder="097 000 0000" value={form.phone} onChange={handleChange} className={errors.phone ? 'input-error' : ''} />
                 {errors.phone && <p className="error">{errors.phone}</p>}
               </div>
-
               <div className="form-group">
                 <label>Email</label>
-                <input
-                  name="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={form.email}
-                  onChange={handleChange}
-                  className={errors.email ? 'input-error' : ''}
-                />
+                <input name="email" type="email" placeholder="you@example.com" value={form.email} onChange={handleChange} className={errors.email ? 'input-error' : ''} />
                 {errors.email && <p className="error">{errors.email}</p>}
               </div>
-
               <div className="form-group">
                 <label>Note (optional)</label>
-                <textarea
-                  name="note"
-                  rows="3"
-                  placeholder="Anything we should know?"
-                  value={form.note}
-                  onChange={handleChange}
-                />
+                <textarea name="note" rows="3" placeholder="Anything we should know?" value={form.note} onChange={handleChange} />
               </div>
             </div>
 
             <div className="panel">
               <h2>Delivery Address</h2>
-
               <div className="delivery-method-toggle">
-                <button
-                  type="button"
-                  className={`delivery-method-btn ${deliveryMethod === 'standard' ? 'active' : ''}`}
-                  onClick={() => setDeliveryMethod('standard')}
-                >
+                <button type="button" className={`delivery-method-btn ${deliveryMethod === 'standard' ? 'active' : ''}`} onClick={() => setDeliveryMethod('standard')}>
                   <span className="delivery-icon">📦</span>
                   <div>
                     <strong>Standard Delivery</strong>
                     <small>3-5 business days · Free</small>
                   </div>
                 </button>
-                <button
-                  type="button"
-                  className={`delivery-method-btn ${deliveryMethod === 'express' ? 'active' : ''}`}
-                  onClick={() => setDeliveryMethod('express')}
-                >
+                <button type="button" className={`delivery-method-btn ${deliveryMethod === 'express' ? 'active' : ''}`} onClick={() => setDeliveryMethod('express')}>
                   <span className="delivery-icon">🚀</span>
                   <div>
                     <strong>Express Delivery</strong>
@@ -256,80 +214,45 @@ function Checkout() {
                   </div>
                 </button>
               </div>
-
               <div className="form-group">
                 <label>Street Address</label>
-                <input
-                  name="address"
-                  placeholder="123 Main Street, Building A"
-                  value={delivery.address}
-                  onChange={handleDeliveryChange}
-                  className={errors.address ? 'input-error' : ''}
-                />
+                <input name="address" placeholder="123 Main Street" value={delivery.address} onChange={handleDeliveryChange} className={errors.address ? 'input-error' : ''} />
                 {errors.address && <p className="error">{errors.address}</p>}
               </div>
-
               <div className="form-row">
                 <div className="form-group">
                   <label>City / Province</label>
-                  <input
-                    name="city"
-                    placeholder="Ho Chi Minh City"
-                    value={delivery.city}
-                    onChange={handleDeliveryChange}
-                    className={errors.city ? 'input-error' : ''}
-                  />
+                  <input name="city" placeholder="Ho Chi Minh City" value={delivery.city} onChange={handleDeliveryChange} className={errors.city ? 'input-error' : ''} />
                   {errors.city && <p className="error">{errors.city}</p>}
                 </div>
-
                 <div className="form-group">
                   <label>District</label>
-                  <input
-                    name="district"
-                    placeholder="District 1"
-                    value={delivery.district}
-                    onChange={handleDeliveryChange}
-                    className={errors.district ? 'input-error' : ''}
-                  />
+                  <input name="district" placeholder="District 1" value={delivery.district} onChange={handleDeliveryChange} className={errors.district ? 'input-error' : ''} />
                   {errors.district && <p className="error">{errors.district}</p>}
                 </div>
               </div>
-
               <div className="form-group">
                 <label>Ward / Commune</label>
-                <input
-                  name="ward"
-                  placeholder="Ward 5"
-                  value={delivery.ward}
-                  onChange={handleDeliveryChange}
-                  className={errors.ward ? 'input-error' : ''}
-                />
+                <input name="ward" placeholder="Ward 5" value={delivery.ward} onChange={handleDeliveryChange} className={errors.ward ? 'input-error' : ''} />
                 {errors.ward && <p className="error">{errors.ward}</p>}
               </div>
             </div>
           </div>
 
-          {/* RIGHT: Payment + screenshot */}
           <div className="checkout-right">
             <div className="panel payment-panel">
               <h2>Payment Method</h2>
               <p className="payment-sub">Scan the QR code to pay the amount below.</p>
-
               <div className="qr-box">
                 <img src={qrCode} alt="Payment QR Code" className="payment-qr" />
               </div>
-
               <div className="amount-box">
-                <span>Amount</span>
-                <strong>${course.price}</strong>
+                <span>Total Amount</span>
+                <strong>${totalAmount}</strong>
               </div>
-
               <div className="form-group">
                 <label>Upload Payment Screenshot</label>
-                <div
-                  className={`upload-box ${errors.screenshot ? 'upload-error' : ''}`}
-                  onClick={() => fileRef.current?.click()}
-                >
+                <div className={`upload-box ${errors.screenshot ? 'upload-error' : ''}`} onClick={() => fileRef.current?.click()}>
                   {preview ? (
                     <img src={preview} alt="Payment preview" className="upload-preview" />
                   ) : (
@@ -340,25 +263,14 @@ function Checkout() {
                     </>
                   )}
                 </div>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                  onChange={handleFile}
-                  style={{ display: 'none' }}
-                />
+                <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" onChange={handleFile} style={{ display: 'none' }} />
                 {errors.screenshot && <p className="error">{errors.screenshot}</p>}
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="btn btn-block submit-order"
-              disabled={loading}
-            >
+            <button type="submit" className="btn btn-block submit-order" disabled={loading}>
               {loading ? 'Submitting Order...' : 'Submit Order'}
             </button>
-
             {loading && <p className="submit-note">Please wait, do not close this page.</p>}
           </div>
         </form>
