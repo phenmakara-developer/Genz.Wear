@@ -26,10 +26,8 @@ function Navbar() {
     <nav className={`navbar ${scrolled ? "navbar-scrolled" : ""}`}>
       <div className="nav-container">
         <Link to="/" className="logo" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-          <img src={logoIcon} alt="Genz Wear" style={{ height: '45px', width: '45px', objectFit: 'contain' }} />
-          <span style={{ fontSize: '1.5rem', fontWeight: '800', color: '#111', letterSpacing: '-0.5px' }}>
-            Genz<span style={{ color: 'var(--accent)' }}>.Wear</span>
-          </span>
+          <img src={logoIcon} alt="Genz Wear" className="nav-logo-img" />
+          <span className="nav-logo-text">Genz<span style={{ color: 'var(--accent)' }}>.Wear</span></span>
         </Link>
 
         <ul className={`nav-menu ${mobileOpen ? 'nav-menu-open' : ''}`}>
