@@ -4,6 +4,7 @@ import Courses from '../data/Courses'
 import { useCart } from '../context/CartContext'
 import { useOrders } from '../context/OrderContext'
 import qrCode from '../assets/qr_code.png'
+import { sendOrderToTelegram, isTelegramConfigured } from '../lib/telegram'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg']
 const MAX_SIZE = 5 * 1024 * 1024
@@ -98,7 +99,7 @@ function Checkout() {
     return nE
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const nE = validate()
     if (Object.keys(nE).length > 0) { setErrors(nE); return }
@@ -125,9 +126,22 @@ function Checkout() {
         paymentMethod: deliveryMethod === 'express' ? 'QR Code (Express)' : 'QR Code',
         deliveryMethod,
       }
-      placeOrder(order)
+      const placed = placeOrder(order)
       if (!product) clearCart()
-      navigate('/success', { state: { orderId: order.id }, replace: true })
+
+      let notifyFailed = false
+      if (isTelegramConfigured()) {
+        try {
+          await sendOrderToTelegram(placed, screenshot)
+        } catch (telegramErr) {
+          notifyFailed = true
+          console.error('Telegram order notification failed:', telegramErr)
+        }
+      } else {
+        notifyFailed = true
+      }
+
+      navigate('/success', { state: { orderId: placed.id, notifyFailed }, replace: true })
     } catch (err) {
       setError(err.message || 'Unable to submit order. Please try again.')
     } finally {
@@ -272,6 +286,11 @@ function Checkout() {
               {loading ? 'Submitting Order...' : 'Submit Order'}
             </button>
             {loading && <p className="submit-note">Please wait, do not close this page.</p>}
+            {!isTelegramConfigured() && (
+              <p className="submit-note" style={{ color: '#dc2626' }}>
+                Order notifications are not configured on this deployment.
+              </p>
+            )}
           </div>
         </form>
       </div>
