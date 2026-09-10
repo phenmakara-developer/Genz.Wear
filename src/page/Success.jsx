@@ -7,7 +7,8 @@ function Success() {
   const location = useLocation()
   const stateOrderId = location.state?.orderId
   const orderIdShown = orderId || stateOrderId || 'ORD-XXXX'
-  const telegramUsername = 'my_shop_order_genz_wear_bot'
+  const notifyFailed = location.state?.notifyFailed
+  const telegramUsername = 'my_shopping_order_genz_wear_bot'
   const telegramUrl = `https://t.me/${telegramUsername}`
 
   return (
@@ -32,6 +33,15 @@ function Success() {
           Your payment is currently being verified.
           We will contact you after verification.
         </p>
+
+        {notifyFailed && (
+          <div className="success-info" style={{ borderColor: '#dc2626' }}>
+            <p style={{ color: '#dc2626', margin: 0, fontSize: 14 }}>
+              We could not auto-notify our team of your order ({orderIdShown}).
+              Please message us on Telegram right away so we do not miss it.
+            </p>
+          </div>
+        )}
 
         <div className="success-info">
           <div>

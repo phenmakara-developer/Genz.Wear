@@ -76,6 +76,29 @@ npm run dev
 npm run build
 ```
 
+## Order Notifications (Telegram)
+
+The checkout sends every order (with the payment screenshot) to your Telegram so you
+can fulfill it. Set these environment variables (in a local `.env` for dev, and as
+Environment Variables in Vercel for production — see `.env.example`):
+
+| Variable | What it is |
+|---|---|
+| `VITE_TELEGRAM_BOT_TOKEN` | Bot token from [@BotFather](https://t.me/BotFather) |
+| `VITE_TELEGRAM_CHAT_ID` | Your chat id (message your bot, then check `https://api.telegram.org/bot<TOKEN>/getUpdates`) |
+
+> Note for a school project: this sends messages directly from the browser, so the bot
+> token is technically visible in the site's JS bundle. Good enough for a demo; for a
+> real store, move this call into a small serverless function instead.
+
+## Deploy to Vercel
+
+1. Push this repo to GitHub (e.g. `git init && git add . && git commit -m "init"`, then create a repo on GitHub and push).
+2. Go to [vercel.com](https://vercel.com) → **Add New → Project** → import the GitHub repo.
+3. Vite is auto-detected; keep default build (`npm run build`, output `dist`).
+4. In **Settings → Environment Variables**, add `VITE_TELEGRAM_BOT_TOKEN` and `VITE_TELEGRAM_CHAT_ID`, then **Redeploy**.
+5. Open the generated URL on your phone — the SPA routes already work (`vercel.json` handles them).
+
 ## Website Flow
 
 ```
