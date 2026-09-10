@@ -8,7 +8,7 @@ import { OrderProvider } from './context/OrderContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 
-import HomePage from './page/homepage'
+import HomePage from './page/Homepage'
 import CoursePage from './page/CoursePage'
 import ProductDetail from './page/CourseDetail'
 import Aboutpage from './page/Aboutpage'
