@@ -3444,3 +3444,608 @@ h1, h2, h3, h4 {
     display: none;
   }
 }
+
+/* ============================================
+   RESPONSIVE REFINEMENTS
+   Desktop >=1200 · Tablet 768-1199 · Mobile 480-767 · Small <480
+   ============================================ */
+
+/* --- Global safety + mobile behaviour ------------------------------- */
+html {
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+html,
+body {
+  overflow-x: clip;
+}
+
+body {
+  overflow-wrap: break-word;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+input,
+select,
+textarea,
+.btn {
+  touch-action: manipulation;
+}
+
+img {
+  aspect-ratio: auto;
+}
+
+/* New navbar logo classes (replaces previously inline styles) */
+.nav-logo-img {
+  height: 45px;
+  width: 45px;
+  object-fit: contain;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.nav-logo-text {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #111;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* Prevent iOS zooming into inputs when focused */
+@media (max-width: 767px) {
+  .form-group input,
+  .form-group textarea,
+  .form-group select,
+  .news-form input {
+    font-size: 16px;
+  }
+}
+
+/* --- Product / course grid: tablet 2 cols, mobile 1 col ------------- */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .product-card.featured .product-media {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 767px) {
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .product-media {
+    height: 250px;
+  }
+
+  .product-card.featured .product-media {
+    min-height: 220px;
+  }
+
+  .product-body {
+    padding: 16px;
+  }
+
+  .product-title {
+    font-size: 16px;
+  }
+}
+
+/* --- Navbar (mobile & small) ---------------------------------------- */
+@media (max-width: 800px) {
+  .nav-menu {
+    max-height: calc(100vh - 76px);
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .nav-container {
+    height: 64px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    gap: 10px;
+  }
+
+  .nav-menu {
+    top: 64px;
+    max-height: calc(100vh - 64px);
+    box-shadow: 0 14px 40px rgba(16, 24, 40, 0.16);
+  }
+
+  .nav-menu a {
+    font-size: 15px;
+    padding: 14px 18px;
+  }
+
+  .nav-logo-img {
+    height: 38px;
+    width: 38px;
+  }
+
+  .nav-logo-text {
+    font-size: 1.2rem;
+  }
+
+  .nav-right {
+    gap: 4px;
+  }
+
+  .nav-mobile-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* --- Hero ----------------------------------------------------------- */
+@media (max-width: 480px) {
+  .hero {
+    padding: 36px 16px;
+    gap: 28px;
+  }
+
+  .hero-text h1 {
+    font-size: 34px;
+  }
+
+  .hero-text p {
+    font-size: 16px;
+  }
+
+  .hero-image img {
+    height: 260px;
+  }
+}
+
+/* --- Section headings (Shop page uses an <h1>) ---------------------- */
+.section-heading h1 {
+  font-size: 36px;
+  font-weight: 800;
+  margin: 10px 0 12px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 767px) {
+  .section-heading {
+    margin-bottom: 30px;
+  }
+
+  .section-heading h2,
+  .section-heading h1 {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-heading h2,
+  .section-heading h1 {
+    font-size: 24px;
+  }
+}
+
+/* --- Page container padding ------------------------------------------ */
+@media (max-width: 767px) {
+  .page {
+    padding: 24px 16px 40px;
+  }
+
+  .shop-page {
+    padding: 40px 16px 60px;
+  }
+
+  .detail-page {
+    padding: 32px 16px 60px;
+  }
+
+  .checkout-page {
+    padding: 32px 16px 60px;
+  }
+
+  .about-page {
+    padding: 30px 16px;
+  }
+
+  .auth-page {
+    padding: 40px 16px;
+  }
+}
+
+/* --- Buttons & filter chips (easy tap targets) ----------------------- */
+@media (max-width: 767px) {
+  .btn {
+    padding: 13px 20px;
+  }
+
+  .btn-sm {
+    padding: 11px 16px;
+  }
+
+  .filter-btn {
+    padding: 10px 18px;
+  }
+
+  .qty-controls button {
+    width: 42px;
+    height: 42px;
+  }
+
+  .qty-controls span {
+    width: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chip {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+/* --- Product detail page --------------------------------------------- */
+.detail-thumbs,
+.pm-thumbs {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .detail-main-img {
+    height: 240px;
+  }
+
+  .detail-content h1 {
+    font-size: 24px;
+  }
+
+  .detail-price {
+    font-size: 26px;
+  }
+
+  .thumb {
+    width: 60px;
+    height: 60px;
+  }
+
+  .pm-thumb {
+    width: 54px;
+    height: 54px;
+  }
+
+  .pm-main-img {
+    height: 210px;
+  }
+
+  .specs li {
+    font-size: 13px;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Single column modals on phones (keep 2-col on tablets) */
+  .pm-body {
+    grid-template-columns: 1fr;
+  }
+
+  .buy-modal-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- QR canvases / images (never overflow) --------------------------- */
+.buy-modal-qr-box {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.buy-modal-qr-canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 480px) {
+  .payment-qr {
+    width: 160px;
+    height: 160px;
+  }
+}
+
+/* --- Checkout / forms ------------------------------------------------- */
+@media (max-width: 767px) {
+  .panel {
+    padding: 20px;
+  }
+
+  .course-summary img {
+    width: 88px;
+    height: 88px;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .checkout-grid {
+    gap: 20px;
+  }
+
+  .delivery-method-btn {
+    padding: 14px;
+  }
+
+  .auth-card {
+    padding: 30px 20px;
+  }
+
+  .auth-header h1 {
+    font-size: 24px;
+  }
+
+  .submit-order {
+    font-size: 15px;
+  }
+}
+
+/* --- Cart ------------------------------------------------------------- */
+@media (max-width: 480px) {
+  .cart-item-img {
+    width: 68px;
+    height: 68px;
+  }
+
+  .cart-item-actions {
+    gap: 12px;
+  }
+}
+
+/* --- Success page ----------------------------------------------------- */
+@media (max-width: 480px) {
+  .success-card {
+    padding: 30px 18px;
+  }
+
+  .success-card h1 {
+    font-size: 24px;
+  }
+
+  .success-info {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* --- About page -------------------------------------------------------- */
+@media (max-width: 767px) {
+  .owner-photo {
+    min-height: 260px;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-content {
+    padding: 28px 20px;
+  }
+
+  .about-content h1 {
+    font-size: 24px;
+  }
+
+  .about-stats {
+    flex-wrap: wrap;
+    gap: 20px 32px;
+  }
+
+  .about-stats strong {
+    font-size: 22px;
+  }
+}
+
+/* --- Footer ------------------------------------------------------------ */
+@media (max-width: 767px) {
+  .footer {
+    padding: 40px 20px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .payments {
+    white-space: normal;
+    text-align: center;
+  }
+
+  .news-form {
+    flex-direction: column;
+  }
+
+  .news-form .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ============================================
+   CHECKOUT PAGE CLEANUP (mobile & tablet)
+   ============================================ */
+/* Tighter panel rhythm on phones */
+@media (max-width: 767px) {
+  .checkout-wrap {
+    max-width: 560px;
+  }
+
+  .checkout-left,
+  .checkout-right {
+    gap: 16px;
+  }
+
+  .checkout-wrap .panel {
+    padding: 18px 16px;
+    border-radius: 14px;
+  }
+
+  .checkout-wrap .panel h2 {
+    font-size: 17px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  /* Compact order-summary rows (row layout, smaller image) */
+  .course-summary {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .course-summary:last-child {
+    border-bottom: none;
+  }
+
+  .course-summary img {
+    width: 66px;
+    height: 66px;
+    border-radius: 10px;
+  }
+
+  .course-summary h3 {
+    font-size: 15px;
+    margin: 0 0 4px;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+
+  .course-summary .price-now {
+    font-size: 16px;
+  }
+
+  /* Sticky floating Pay button so it's always reachable */
+  .checkout-right {
+    margin-top: 2px;
+  }
+
+  .checkout-right .submit-order {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    width: 100%;
+    margin-top: auto;
+    padding: 16px;
+    border-radius: 14px;
+    box-shadow: 0 -4px 24px rgba(16, 24, 40, 0.18), 0 10px 24px rgba(16, 185, 129, 0.25);
+  }
+
+  .checkout-right .submit-note {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-top: 4px;
+  }
+}
+
+/* Payment panel polish on phones */
+@media (max-width: 767px) {
+  .qr-box {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .payment-qr {
+    width: 180px;
+    height: 180px;
+  }
+
+  .amount-box {
+    padding: 12px 14px;
+  }
+
+  .amount-box strong {
+    font-size: 20px;
+  }
+
+  .upload-box {
+    min-height: 150px;
+  }
+
+  .delivery-method-btn {
+    padding: 14px;
+  }
+
+  .delivery-icon {
+    font-size: 24px;
+  }
+}
+
+/* Tablet rhythm (768-1199) */
+@media (min-width: 881px) and (max-width: 1199px) {
+  .checkout-grid {
+    gap: 24px;
+  }
+
+  .checkout-wrap .panel {
+    padding: 22px 24px;
+  }
+}
+
+@media (max-width: 880px) {
+  .checkout-grid {
+    gap: 20px;
+  }
+}
+
+/* ============================================
+   PRODUCT CARD ADD-TO-CART BUTTON
+   ============================================ */
+.product-foot {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.product-foot-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-card.featured .product-foot-actions {
+  justify-content: flex-start;
+}
+
+.product-card.featured .btn-outline {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.product-card.featured .btn-outline:hover {
+  background: #fff;
+  color: var(--text);
+}
+
+@media (max-width: 480px) {
+  .product-foot-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .product-foot-actions .btn-sm {
+    flex: 1;
+    justify-content: center;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+}

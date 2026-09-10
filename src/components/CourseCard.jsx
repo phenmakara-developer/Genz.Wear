@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useCart } from '../context/CartContext'
 
 function ProductCard({
   id,
@@ -10,59 +12,85 @@ function ProductCard({
   category,
   rating,
   badge,
+  sizes = [],
+  colors = [],
   onSelect,
   featured,
 }) {
-  const handleClick = (e) => {
+  const { addItem } = useCart()
+  const navigate = useNavigate()
+  const [added, setAdded] = useState(false)
+
+  const handleOpen = () => {
     if (onSelect) {
-      e.preventDefault()
       onSelect(id)
+      return
     }
+    navigate(`/product/${id}`)
+  }
+
+  const handleAdd = (e) => {
+    e.stopPropagation()
+    addItem({ id, title, price, img: image, category }, { size: sizes[0], color: colors[0], quantity: 1 })
+    setAdded(true)
+    setTimeout(() => setAdded(false), 2000)
+  }
+
+  const handleView = (e) => {
+    e.stopPropagation()
   }
 
   return (
-    <Link
-      to={`/product/${id}`}
-      style={{ textDecoration: 'none', color: 'inherit' }}
-      onClick={handleClick}
+    <div
+      data-aos="fade-up"
+      className={`product-card ${featured ? 'featured' : ''}`}
+      style={{ cursor: 'pointer' }}
+      onClick={handleOpen}
     >
-      <div data-aos="fade-up" className={`product-card ${featured ? 'featured' : ''}`} style={{ cursor: 'pointer' }}>
-        <div className="product-media">
-          <img src={image} alt={title} loading="lazy" />
+      <div className="product-media">
+        <img src={image} alt={title} loading="lazy" />
 
-          {(badge || oldPrice) && (
-            <span className={`product-badge ${oldPrice ? 'badge-sale' : 'badge-hot'}`}>
-              {featured ? '★ Featured Drop' : badge || 'SALE'}
-            </span>
-          )}
+        {(badge || oldPrice) && (
+          <span className={`product-badge ${oldPrice ? 'badge-sale' : 'badge-hot'}`}>
+            {featured ? '★ Featured Drop' : badge || 'SALE'}
+          </span>
+        )}
+      </div>
+
+      <div className="product-body">
+        <div className="product-top">
+          <span className="product-cat">{category}</span>
+          <span className="product-rating">★ {rating}</span>
         </div>
 
-        <div className="product-body">
-          <div className="product-top">
-            <span className="product-cat">{category}</span>
-            <span className="product-rating">★ {rating}</span>
+        {featured && <span className="detail-label">This week&apos;s pick</span>}
+
+        <h3 className="product-title">
+          {title}
+        </h3>
+
+        <p className="product-desc">{description}</p>
+
+        <div className="product-foot">
+          <div className="price">
+            <span className="price-now">${price}</span>
+            {oldPrice && <span className="price-old">${oldPrice}</span>}
           </div>
-
-          {featured && <span className="detail-label">This week&apos;s pick</span>}
-
-          <h3 className="product-title">
-            {title}
-          </h3>
-
-          <p className="product-desc">{description}</p>
-
-          <div className="product-foot">
-            <div className="price">
-              <span className="price-now">${price}</span>
-              {oldPrice && <span className="price-old">${oldPrice}</span>}
-            </div>
-            <span className="btn btn-sm">
+          <div className="product-foot-actions">
+            <button
+              type="button"
+              className={`btn btn-sm ${added ? 'btn-added' : ''}`}
+              onClick={handleAdd}
+            >
+              {added ? '✓ Added' : 'Add to Cart'}
+            </button>
+            <Link to={`/product/${id}`} className="btn btn-sm btn-outline" onClick={handleView}>
               View
-            </span>
+            </Link>
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   )
 }
 
