@@ -1,27 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import QRCode from 'qrcode'
+import qrCode from '../assets/qr_payment.jpg'
 
 function BuyCard({ product, onClose }) {
-  const canvasRef = useRef(null)
-
-  useEffect(() => {
-    if (canvasRef.current && product) {
-      QRCode.toCanvas(
-        canvasRef.current,
-        `GENZ-WEAR|${product.title}|$${product.price}`,
-        {
-          width: 200,
-          margin: 2,
-          color: {
-            dark: '#111827',
-            light: '#ffffff',
-          },
-        }
-      )
-    }
-  }, [product])
-
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape') onClose()
@@ -62,7 +43,7 @@ function BuyCard({ product, onClose }) {
             <div className="buy-modal-qr-section">
               <p className="buy-modal-qr-label">Scan to Pay</p>
               <div className="buy-modal-qr-box">
-                <canvas ref={canvasRef} className="buy-modal-qr-canvas" />
+                <img src={qrCode} alt="Payment QR Code" className="buy-modal-qr-img" />
               </div>
               <div className="buy-modal-amount">
                 <span>Total Amount</span>

@@ -3,7 +3,8 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import Courses from '../data/Courses'
 import { useCart } from '../context/CartContext'
 import { useOrders } from '../context/OrderContext'
-import qrCode from '../assets/qr_code.png'
+import qrCode from '../assets/qr_payment.jpg'
+import { sendOrderToTelegram, isTelegramConfigured } from '../lib/telegram'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg']
 const MAX_SIZE = 5 * 1024 * 1024
@@ -42,6 +43,7 @@ function Checkout() {
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [savedOrder, setSavedOrder] = useState(null)
 
   if (!product && cartItems.length === 0) {
     return (
@@ -98,12 +100,29 @@ function Checkout() {
     return nE
   }
 
-  const handleSubmit = (e) => {
+  const sendWithRetry = async (order, attempts = 3) => {
+    let lastErr
+    for (let i = 0; i < attempts; i += 1) {
+      try {
+        await sendOrderToTelegram(order, screenshot)
+        return true
+      } catch (err) {
+        lastErr = err
+        if (i < attempts - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 900))
+        }
+      }
+    }
+    throw lastErr
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const nE = validate()
     if (Object.keys(nE).length > 0) { setErrors(nE); return }
     setLoading(true)
     setError('')
+    setSavedOrder(null)
     try {
       const items = checkoutItems.map((i) => ({
         title: i.title,
@@ -125,14 +144,55 @@ function Checkout() {
         paymentMethod: deliveryMethod === 'express' ? 'QR Code (Express)' : 'QR Code',
         deliveryMethod,
       }
-      placeOrder(order)
-      if (!product) clearCart()
-      navigate('/success', { state: { orderId: order.id }, replace: true })
+      const placed = placeOrder(order)
+
+      let notifyOk = false
+      if (isTelegramConfigured()) {
+        try {
+          await sendWithRetry(placed)
+          notifyOk = true
+        } catch (telegramErr) {
+          console.error('Telegram order notification failed:', telegramErr)
+        }
+      }
+
+      if (notifyOk) {
+        if (!product) clearCart()
+        navigate('/success', { state: { orderId: placed.id }, replace: true })
+      } else {
+        setSavedOrder(placed)
+        setError(
+          isTelegramConfigured()
+            ? 'We could not auto-notify the store about your order. Check your internet connection and try notifying again, or continue anyway and message us directly on Telegram.'
+            : 'Store notifications are not configured on this deployment. You can continue anyway, but please message us directly on Telegram so we do not miss your order.'
+        )
+      }
     } catch (err) {
       setError(err.message || 'Unable to submit order. Please try again.')
     } finally {
       setLoading(false)
     }
+  }
+
+  const retryNotify = async () => {
+    if (!savedOrder) return
+    setLoading(true)
+    setError('')
+    try {
+      await sendWithRetry(savedOrder)
+      if (!product) clearCart()
+      navigate('/success', { state: { orderId: savedOrder.id }, replace: true })
+    } catch (err) {
+      console.error('Telegram retry failed:', err)
+      setError('Still could not reach Telegram. You can retry again or continue anyway and message us directly.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const continueAnyway = () => {
+    if (!savedOrder) return
+    navigate('/success', { state: { orderId: savedOrder.id, notifyFailed: true }, replace: true })
   }
 
   return (
@@ -146,8 +206,18 @@ function Checkout() {
 
         {error && (
           <div className="alert alert-danger">
-            <strong>Order Failed</strong>
+            <strong>{savedOrder ? 'Order Saved — Notification Issue' : 'Order Failed'}</strong>
             <p>{error}</p>
+            {savedOrder && (
+              <div className="recover-actions">
+                <button type="button" className="btn btn-dark" onClick={retryNotify} disabled={loading}>
+                  {loading ? 'Notifying...' : 'Retry Notify'}
+                </button>
+                <button type="button" className="btn btn-outline" onClick={continueAnyway} disabled={loading}>
+                  Continue Anyway
+                </button>
+              </div>
+            )}
           </div>
         )}
 
